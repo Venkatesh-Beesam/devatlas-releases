@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevAtlas — The Developer Productivity Platform</title>
+  <meta name="description" content="DevAtlas is a local-first developer productivity platform. Notes, tasks, diagrams, snippets, journals — all in one beautiful desktop app.">
+  <meta name="keywords" content="developer tools, productivity, notes, task management, code snippets, diagrams, desktop app">
+  <meta name="author" content="DevAtlas">
+  <link rel="icon" type="image/png" href="logo.png">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ================================
+       CSS RESET & BASE
+    ================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #09090b;
+      color: #e4e4e7;
+      line-height: 1.7;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    button { cursor: pointer; border: none; font-family: inherit; }
+
+    /* ================================
+       BRAND COLORS
+    ================================ */
+    :root {
+      --brand-orange: #f59e0b;
+      --brand-blue: #2563eb;
+      --brand-gradient: linear-gradient(135deg, #f59e0b 0%, #ea580c 30%, #2563eb 100%);
+      --brand-gradient-text: linear-gradient(135deg, #fbbf24 0%, #f97316 40%, #3b82f6 100%);
+      --surface-1: #18181b;
+      --surface-2: #1f1f23;
+      --surface-3: #27272a;
+      --border: #3f3f46;
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #71717a;
+    }
+
+    /* ================================
+       UTILITY CLASSES
+    ================================ */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .gradient-text {
+      background: var(--brand-gradient-text);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ================================
+       GLOW / AMBIENT EFFECTS
+    ================================ */
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow-orange {
+      background: #f97316;
+      width: 600px; height: 600px;
+      top: -200px; left: -100px;
+    }
+    .glow-blue {
+      background: #2563eb;
+      width: 500px; height: 500px;
+      top: 100px; right: -150px;
+    }
+
+    /* ================================
+       NAVBAR
+    ================================ */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 16px 0;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(9, 9, 11, 0.8);
+      border-bottom: 1px solid transparent;
+    }
+    .navbar.scrolled {
+      border-bottom-color: var(--border);
+      padding: 12px 0;
+    }
+    .navbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .nav-logo img {
+      height: 36px;
+      width: 36px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      background: var(--brand-gradient);
+      color: white;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border-radius: 10px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 30px rgba(245, 158, 11, 0.25);
+    }
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      color: var(--text-secondary);
+      padding: 8px;
+    }
+
+    /* ================================
+       HERO SECTION
+    ================================ */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 140px 0 100px;
+      overflow: hidden;
+    }
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px 6px 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      animation: fadeInUp 0.6s ease;
+    }
+    .hero-badge .dot {
+      width: 8px; height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse-dot 2s ease infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.6s ease 0.1s both;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 40px;
+      animation: fadeInUp 0.6s ease 0.2s both;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.6s ease 0.3s both;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--brand-gradient);
+      color: white;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 12px;
+      transition: all 0.25s;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.2);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 40px rgba(245, 158, 11, 0.35);
+    }
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1rem;
+      border-radius: 12px;
+      transition: all 0.25s;
+    }
+    .btn-secondary:hover {
+      background: var(--surface-3);
+      border-color: var(--text-muted);
+      transform: translateY(-2px);
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      margin-top: 64px;
+      animation: fadeInUp 0.6s ease 0.4s both;
+    }
+    .hero-stat h3 {
+      font-size: 2rem;
+      font-weight: 800;
+    }
+    .hero-stat p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* Hero app mockup */
+    .hero-mockup {
+      margin-top: 80px;
+      position: relative;
+      z-index: 1;
+      animation: fadeInUp 0.8s ease 0.5s both;
+    }
+    .mockup-window {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset;
+    }
+    .mockup-titlebar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 20px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .mockup-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+    }
+    .mockup-dot.red { background: #ef4444; }
+    .mockup-dot.yellow { background: #eab308; }
+    .mockup-dot.green { background: #22c55e; }
+    .mockup-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 420px;
+    }
+    .mockup-sidebar {
+      background: var(--surface-2);
+      border-right: 1px solid var(--border);
+      padding: 20px 12px;
+    }
+    .mockup-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .mockup-nav-item.active {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+    }
+    .mockup-nav-icon {
+      width: 18px; height: 18px;
+      border-radius: 4px;
+      background: var(--surface-3);
+    }
+    .mockup-nav-item.active .mockup-nav-icon {
+      background: rgba(59, 130, 246, 0.3);
+    }
+    .mockup-main {
+      padding: 24px;
+    }
+    .mockup-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .mockup-card-title {
+      height: 14px;
+      width: 40%;
+      background: var(--surface-3);
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    .mockup-card-line {
+      height: 10px;
+      background: var(--surface-3);
+      border-radius: 3px;
+      margin-bottom: 8px;
+    }
+    .mockup-card-line:last-child { width: 60%; }
+    .mockup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .mockup-stat {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .mockup-stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+    .mockup-stat-num.orange { color: #f97316; }
+    .mockup-stat-num.blue { color: #3b82f6; }
+    .mockup-stat-num.green { color: #22c55e; }
+    .mockup-stat-num.purple { color: #a855f7; }
+    .mockup-stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ================================
+       FEATURES SECTION
+    ================================ */
+    .features {
+      padding: 120px 0;
+      position: relative;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 72px;
+    }
+    .section-tag {
+      display: inline-block;
+      padding: 6px 16px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border-radius: 100px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .section-header h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .section-header p {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--brand-gradient);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover {
+      border-color: var(--text-muted);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      margin-bottom: 20px;
+    }
+    .feature-icon.orange { background: rgba(249, 115, 22, 0.15); }
+    .feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
+    .feature-icon.green { background: rgba(34, 197, 94, 0.15); }
+    .feature-icon.purple { background: rgba(168, 85, 247, 0.15); }
+    .feature-icon.cyan { background: rgba(6, 182, 212, 0.15); }
+    .feature-icon.rose { background: rgba(244, 63, 94, 0.15); }
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+    .feature-card p {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ================================
+       PLATFORM SECTION
+    ================================ */
+    .platforms {
+      padding: 100px 0;
+      background: var(--surface-1);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .platform-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+    .platform-content h2 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+    .platform-content p {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    .download-buttons {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .download-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 28px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: all 0.25s;
+      min-width: 220px;
+    }
+    .download-btn:hover {
+      border-color: var(--text-muted);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    .download-btn svg {
+      width: 32px; height: 32px;
+      flex-shrink: 0;
+    }
+    .download-btn .dl-text {
+      text-align: left;
+    }
+    .download-btn .dl-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .download-btn .dl-platform {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .platform-visual {
+      position: relative;
+    }
+    .platform-visual .os-cards {
+      display: flex;
+      gap: 20px;
+    }
+    .os-card {
+      flex: 1;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    .os-card:hover {
+      border-color: var(--brand-orange);
+      transform: translateY(-6px);
+    }
+    .os-card svg {
+      width: 48px; height: 48px;
+      margin: 0 auto 16px;
+    }
+    .os-card h4 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .os-card p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+    .os-card .check-list {
+      text-align: left;
+      margin-top: 16px;
+      list-style: none;
+    }
+    .os-card .check-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      padding: 4px 0;
+    }
+    .check-icon { color: #22c55e; }
+
+    /* ================================
+       PRICING SECTION
+    ================================ */
+    .pricing {
+      padding: 120px 0;
+    }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .price-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      position: relative;
+      transition: all 0.3s;
+    }
+    .price-card.featured {
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 80px rgba(245, 158, 11, 0.08);
+    }
+    .price-card .popular-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 20px;
+      background: var(--brand-gradient);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .price-card h3 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .price-card .price {
+      margin-bottom: 24px;
+    }
+    .price-card .price .amount {
+      font-size: 3rem;
+      font-weight: 800;
+    }
+    .price-card .price .period {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .price-card .price-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+    .price-features {
+      list-style: none;
+      margin-bottom: 32px;
+    }
+    .price-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+    }
+    .price-features .check { color: #22c55e; flex-shrink: 0; margin-top: 2px; }
+    .price-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      text-align: center;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      transition: all 0.25s;
+    }
+    .price-btn.primary {
+      background: var(--brand-gradient);
+      color: white;
+    }
+    .price-btn.primary:hover {
+      box-shadow: 0 8px 30px rgba(245, 158, 11, 0.3);
+      transform: translateY(-2px);
+    }
+    .price-btn.secondary {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .price-btn.secondary:hover {
+      border-color: var(--text-muted);
+      transform: translateY(-2px);
+    }
+
+    /* ================================
+       TECH STACK / TRUST SECTION
+    ================================ */
+    .tech-strip {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-1);
+      text-align: center;
+    }
+    .tech-strip h3 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+    .tech-logos {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    .tech-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .tech-item span {
+      font-size: 1.4rem;
+    }
+
+    /* ================================
+       FOOTER
+    ================================ */
+    .footer {
+      padding: 80px 0 40px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px;
+      margin-bottom: 60px;
+    }
+    .footer-brand img {
+      height: 40px;
+      width: 40px;
+      object-fit: contain;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .footer-brand p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      max-width: 280px;
+    }
+    .footer-col h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: 12px; }
+    .footer-col a {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--text-primary); }
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* ================================
+       ANIMATIONS
+    ================================ */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-on-scroll {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.7s ease;
+    }
+    .animate-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ================================
+       RESPONSIVE
+    ================================ */
+    @media (max-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .platform-grid { grid-template-columns: 1fr; text-align: center; }
+      .download-buttons { justify-content: center; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .mobile-menu-btn { display: block; }
+      .features-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+      .hero-stats { gap: 24px; }
+      .hero-stat h3 { font-size: 1.5rem; }
+      .mockup-body { grid-template-columns: 1fr; }
+      .mockup-sidebar { display: none; }
+      .footer-grid { grid-template-columns: 1fr; }
+      .footer-bottom { flex-direction: column; gap: 16px; text-align: center; }
+      .os-cards { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== NAVBAR ==================== -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#" class="nav-logo">
+        <img src="logo.png" alt="DevAtlas Logo">
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#download">Download</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="https://github.com/Venkatesh-Beesam/devatlas-releases" target="_blank">GitHub</a></li>
+      </ul>
+      <a href="#download" class="nav-cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Download Free
+      </a>
+      <button class="mobile-menu-btn" onclick="document.querySelector('.nav-links').classList.toggle('show')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="hero">
+    <div class="glow-orb glow-orange"></div>
+    <div class="glow-orb glow-blue"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          Version 1.0 — Now available for Mac & Windows
+        </div>
+        <h1>Your entire dev workflow.<br><span class="gradient-text">One powerful app.</span></h1>
+        <p>Notes, tasks, diagrams, code snippets, journals, knowledge graphs — all in a beautiful, blazing-fast desktop app. Local-first. Private. Yours.</p>
+        <div class="hero-actions">
+          <a href="#download" class="btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download for Free
+          </a>
+          <a href="#features" class="btn-secondary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M10 8l6 4-6 4V8z" fill="currentColor"/></svg>
+            See Features
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <h3 class="gradient-text">13+</h3>
+            <p>Built-in Modules</p>
+          </div>
+          <div class="hero-stat">
+            <h3 class="gradient-text">0ms</h3>
+            <p>Cloud Latency</p>
+          </div>
+          <div class="hero-stat">
+            <h3 class="gradient-text">100%</h3>
+            <p>Private & Local</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- App Mockup -->
+      <div class="hero-mockup">
+        <div class="mockup-window">
+          <div class="mockup-titlebar">
+            <div class="mockup-dot red"></div>
+            <div class="mockup-dot yellow"></div>
+            <div class="mockup-dot green"></div>
+            <span style="flex:1; text-align:center; font-size:0.8rem; color:var(--text-muted); font-weight:500;">DevAtlas — Dashboard</span>
+          </div>
+          <div class="mockup-body">
+            <div class="mockup-sidebar">
+              <div class="mockup-nav-item active">
+                <div class="mockup-nav-icon"></div> Dashboard
+              </div>
+              <div class="mockup-nav-item">
+                <div class="mockup-nav-icon"></div> Knowledge Base
+              </div>
+              <div class="mockup-nav-item">
+                <div class="mockup-nav-icon"></div> Tasks
+              </div>
+              <div class="mockup-nav-item">
+                <div class="mockup-nav-icon"></div> Snippets
+              </div>
+              <div class="mockup-nav-item">
+                <div class="mockup-nav-icon"></div> Journal
+              </div>
+              <div class="mockup-nav-item">
+                <div class="mockup-nav-icon"></div> Diagrams
+              </div>
+              <div class="mockup-nav-item">
+                <div class="mockup-nav-icon"></div> Goals
+              </div>
+              <div class="mockup-nav-item">
+                <div class="mockup-nav-icon"></div> Bookmarks
+              </div>
+            </div>
+            <div class="mockup-main">
+              <div class="mockup-grid" style="margin-bottom:20px;">
+                <div class="mockup-stat">
+                  <div class="mockup-stat-num orange">12</div>
+                  <div class="mockup-stat-label">Active Tasks</div>
+                </div>
+                <div class="mockup-stat">
+                  <div class="mockup-stat-num blue">47</div>
+                  <div class="mockup-stat-label">Notes Written</div>
+                </div>
+                <div class="mockup-stat">
+                  <div class="mockup-stat-num green">8</div>
+                  <div class="mockup-stat-label">Diagrams</div>
+                </div>
+                <div class="mockup-stat">
+                  <div class="mockup-stat-num purple">156</div>
+                  <div class="mockup-stat-label">Snippets Saved</div>
+                </div>
+              </div>
+              <div class="mockup-card">
+                <div class="mockup-card-title"></div>
+                <div class="mockup-card-line" style="width:90%"></div>
+                <div class="mockup-card-line" style="width:75%"></div>
+                <div class="mockup-card-line" style="width:60%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FEATURES ==================== -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-tag">Features</span>
+        <h2>Everything a developer needs.<br><span class="gradient-text">Nothing they don't.</span></h2>
+        <p>13+ integrated modules designed for how developers actually work — no context switching, no SaaS fatigue.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon orange">&#128221;</div>
+          <h3>Knowledge Base</h3>
+          <p>Rich markdown editor with folder tree, drag & drop, tags, search, and instant previews. Your personal wiki.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon blue">&#9745;</div>
+          <h3>Task Management</h3>
+          <p>Kanban boards, custom statuses, priorities, subtasks, due dates, Eisenhower matrix, and project-scoped views.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon green">&#128187;</div>
+          <h3>Code Snippets</h3>
+          <p>Save, organize, and search code snippets across 50+ languages. Syntax highlighting, tags, favorites.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon purple">&#128200;</div>
+          <h3>Diagram Lab</h3>
+          <p>Create flowcharts, sequence diagrams, ER diagrams, and more with Mermaid syntax — rendered live.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon cyan">&#128218;</div>
+          <h3>Dev Journal</h3>
+          <p>Daily reflections with mood tracking, learnings, challenges, and project tags. Build your developer story.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon rose">&#127919;</div>
+          <h3>Goals & Tracking</h3>
+          <p>Set quarterly goals, track milestones, and measure progress. Pomodoro timer built right into the top bar.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon blue">&#128279;</div>
+          <h3>Knowledge Graph</h3>
+          <p>Visualize connections between notes, tasks, snippets, and diagrams. Cross-reference anything with anything.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon orange">&#128209;</div>
+          <h3>Project Hub</h3>
+          <p>Architecture Decision Records, project memory, activity feeds. Never lose context on complex projects.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon green">&#128269;</div>
+          <h3>Smart Search</h3>
+          <p>Fuzzy search across all modules — notes, tasks, snippets, bookmarks. Find anything in milliseconds.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== TECH STRIP ==================== -->
+  <div class="tech-strip animate-on-scroll">
+    <div class="container">
+      <h3>Built with Modern Technology</h3>
+      <div class="tech-logos">
+        <div class="tech-item"><span>&#9883;</span> React 18</div>
+        <div class="tech-item"><span>&#128295;</span> TypeScript</div>
+        <div class="tech-item"><span>&#9889;</span> Vite 5</div>
+        <div class="tech-item"><span>&#127912;</span> Tailwind CSS</div>
+        <div class="tech-item"><span>&#129513;</span> Tauri</div>
+        <div class="tech-item"><span>&#128451;</span> SQLite</div>
+        <div class="tech-item"><span>&#9881;</span> Rust</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DOWNLOAD / PLATFORM ==================== -->
+  <section class="platforms" id="download">
+    <div class="container">
+      <div class="platform-grid">
+        <div class="platform-content animate-on-scroll">
+          <span class="section-tag">Download</span>
+          <h2>Available for <span class="gradient-text">Mac & Windows</span></h2>
+          <p>DevAtlas runs natively on your machine. No Electron bloat — powered by Tauri and Rust for a tiny footprint, fast startup, and low memory usage.</p>
+          <div class="download-buttons">
+            <a href="https://github.com/Venkatesh-Beesam/devatlas-releases/releases/latest/download/DevAtlas_1.0.0_aarch64.dmg" id="mac-download" class="download-btn">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="color:#a1a1aa;">
+                <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 16.56 2.93 11.3 4.7 7.72C5.57 5.94 7.36 4.86 9.28 4.84C10.56 4.81 11.78 5.7 12.56 5.7C13.34 5.7 14.85 4.63 16.4 4.8C17.07 4.83 18.95 5.07 20.17 6.8C20.06 6.87 17.65 8.27 17.68 11.17C17.71 14.64 20.68 15.77 20.72 15.78C20.69 15.86 20.2 17.55 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/>
+              </svg>
+              <div class="dl-text">
+                <div class="dl-label">Download for</div>
+                <div class="dl-platform">macOS</div>
+              </div>
+            </a>
+            <a href="https://github.com/Venkatesh-Beesam/devatlas-releases/releases/latest/download/DevAtlas_1.0.0_x64-setup.exe" id="win-download" class="download-btn">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="color:#a1a1aa;">
+                <path d="M3 12V6.75L9 5.43V11.91L3 12ZM20 3V11.75L10 11.97V5.07L20 3ZM3 13L9 13.09V19.9L3 18.75V13ZM10 13.2L20 13V22L10 20.25V13.2Z"/>
+              </svg>
+              <div class="dl-text">
+                <div class="dl-label">Download for</div>
+                <div class="dl-platform">Windows</div>
+              </div>
+            </a>
+          </div>
+          <p class="dl-note" style="font-size:0.8rem; color:#71717a; margin-top:16px;">
+            v1.0.0 &middot; Requires macOS 12+ or Windows 10+ &middot; <a href="https://github.com/Venkatesh-Beesam/devatlas-releases/releases" style="color:#60a5fa; text-decoration:underline;">All releases</a>
+          </p>
+        </div>
+        <div class="platform-visual animate-on-scroll">
+          <div class="os-cards">
+            <div class="os-card">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="color:#a1a1aa;">
+                <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 16.56 2.93 11.3 4.7 7.72C5.57 5.94 7.36 4.86 9.28 4.84C10.56 4.81 11.78 5.7 12.56 5.7C13.34 5.7 14.85 4.63 16.4 4.8C17.07 4.83 18.95 5.07 20.17 6.8C20.06 6.87 17.65 8.27 17.68 11.17C17.71 14.64 20.68 15.77 20.72 15.78C20.69 15.86 20.2 17.55 18.71 19.5Z"/>
+              </svg>
+              <h4>macOS</h4>
+              <p>.dmg installer</p>
+              <ul class="check-list">
+                <li><span class="check">&#10003;</span> Apple Silicon native</li>
+                <li><span class="check">&#10003;</span> Intel supported</li>
+                <li><span class="check">&#10003;</span> macOS 12+</li>
+              </ul>
+            </div>
+            <div class="os-card">
+              <svg viewBox="0 0 24 24" fill="currentColor" style="color:#a1a1aa;">
+                <path d="M3 12V6.75L9 5.43V11.91L3 12ZM20 3V11.75L10 11.97V5.07L20 3ZM3 13L9 13.09V19.9L3 18.75V13ZM10 13.2L20 13V22L10 20.25V13.2Z"/>
+              </svg>
+              <h4>Windows</h4>
+              <p>NSIS installer</p>
+              <ul class="check-list">
+                <li><span class="check">&#10003;</span> x64 & ARM64</li>
+                <li><span class="check">&#10003;</span> Auto-updates</li>
+                <li><span class="check">&#10003;</span> Windows 10+</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PRICING ==================== -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-tag">Pricing</span>
+        <h2>Free forever. <span class="gradient-text">Sync if you want.</span></h2>
+        <p>DevAtlas is free to use with all features. Pay only if you want cloud sync across devices.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="price-card animate-on-scroll">
+          <h3>Free</h3>
+          <div class="price">
+            <span class="amount">$0</span>
+            <span class="period"> / forever</span>
+          </div>
+          <p class="price-desc">Everything you need for local productivity.</p>
+          <ul class="price-features">
+            <li><span class="check">&#10003;</span> All 13+ modules</li>
+            <li><span class="check">&#10003;</span> Unlimited notes, tasks, snippets</li>
+            <li><span class="check">&#10003;</span> SQLite local storage</li>
+            <li><span class="check">&#10003;</span> Export & import data</li>
+            <li><span class="check">&#10003;</span> Themes & customization</li>
+            <li><span class="check">&#10003;</span> Pomodoro timer</li>
+            <li><span class="check">&#10003;</span> Keyboard shortcuts</li>
+          </ul>
+          <a href="#download" class="price-btn secondary">Download Free</a>
+        </div>
+
+        <div class="price-card featured animate-on-scroll">
+          <div class="popular-badge">Most Popular</div>
+          <h3>DevAtlas Sync</h3>
+          <div class="price">
+            <span class="amount gradient-text">$5</span>
+            <span class="period"> / month</span>
+          </div>
+          <p class="price-desc">Sync everything across Mac and Windows.</p>
+          <ul class="price-features">
+            <li><span class="check">&#10003;</span> Everything in Free</li>
+            <li><span class="check">&#10003;</span> End-to-end encrypted sync</li>
+            <li><span class="check">&#10003;</span> Sync across unlimited devices</li>
+            <li><span class="check">&#10003;</span> Version history (30 days)</li>
+            <li><span class="check">&#10003;</span> Priority support</li>
+            <li><span class="check">&#10003;</span> Early access to new features</li>
+            <li><span class="check">&#10003;</span> Automatic cloud backups</li>
+          </ul>
+          <a href="#" class="price-btn primary">Get Sync</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="logo.png" alt="DevAtlas">
+          <p>The local-first developer productivity platform. Built by developers, for developers.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#download">Download</a></li>
+            <li><a href="#">Changelog</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Documentation</a></li>
+            <li><a href="#">Getting Started</a></li>
+            <li><a href="#">API Reference</a></li>
+            <li><a href="#">Community</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#">Privacy Policy</a></li>
+            <li><a href="#">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 DevAtlas. All rights reserved.</span>
+        <span>Made with &#10084; by Venkat Beesam</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== SCRIPTS ==================== -->
+  <script>
+    // Navbar scroll effect
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    // Scroll-triggered animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // Auto-detect OS and highlight the matching download button
+    (function detectOS() {
+      const ua = navigator.userAgent.toLowerCase();
+      const isMac = ua.includes('mac');
+      const isWin = ua.includes('win');
+      const macBtn = document.getElementById('mac-download');
+      const winBtn = document.getElementById('win-download');
+
+      if (isMac && macBtn) {
+        macBtn.style.borderColor = '#f59e0b';
+        macBtn.style.boxShadow = '0 0 20px rgba(245,158,11,0.15)';
+        macBtn.querySelector('.dl-label').textContent = 'Recommended for you';
+      } else if (isWin && winBtn) {
+        winBtn.style.borderColor = '#f59e0b';
+        winBtn.style.boxShadow = '0 0 20px rgba(245,158,11,0.15)';
+        winBtn.querySelector('.dl-label').textContent = 'Recommended for you';
+      }
+    })();
+  </script>
+</body>
+</html>
